@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>15‑Puzzle</title>
+
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #050814;
+        --bg-elevated: #0b1020;
+        --tile: #151a2b;
+        --tile-highlight: #1f2937;
+        --accent: #38bdf8;
+        --accent-soft: rgba(56, 189, 248, 0.14);
+        --accent-strong: rgba(56, 189, 248, 0.35);
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --danger: #fb7185;
+        --radius-lg: 18px;
+        --radius-xl: 22px;
+        --transition-fast: 160ms cubic-bezier(0.22, 0.61, 0.36, 1);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+          sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 20% -10%, rgba(56, 189, 248, 0.25), transparent 60%),
+          radial-gradient(circle at 80% 120%, rgba(129, 140, 248, 0.22), transparent 60%),
+          radial-gradient(circle at -10% 120%, rgba(45, 212, 191, 0.18), transparent 55%),
+          var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-rendering: geometricPrecision;
+        -webkit-font-smoothing: antialiased;
+        padding: 1.5rem;
+      }
+
+      .shell {
+        position: relative;
+        width: min(480px, 100%);
+        max-width: 480px;
+        background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.94));
+        border-radius: 26px;
+        padding: 1.5rem 1.6rem 1.4rem;
+        box-shadow:
+          0 28px 80px rgba(0, 0, 0, 0.85),
+          0 0 0 1px rgba(148, 163, 184, 0.08);
+        overflow: hidden;
+      }
+
+      .shell::before {
+        content: "";
+        position: absolute;
+        inset: -40%;
+        opacity: 0.22;
+        pointer-events: none;
+        background-image: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.3) 0, transparent 55%),
+          radial-gradient(circle at 100% 100%, rgba(129, 140, 248, 0.22) 0, transparent 55%);
+        mix-blend-mode: screen;
+      }
+
+      .shell-inner {
+        position: relative;
+        z-index: 1;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .title {
+        display: flex;
+        flex-direction: column;
+        gap: 0.18rem;
+      }
+
+      .title-main {
+        font-size: 1.25rem;
+        letter-spacing: 0.03em;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+
+      .title-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.2rem 0.45rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        color: var(--muted);
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+      }
+
+      .dot {
+        width: 0.43rem;
+        height: 0.43rem;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.22);
+      }
+
+      .subtitle {
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        border: 1px solid rgba(148, 163, 184, 0.65);
+        background: radial-gradient(circle at 0 0, rgba(148, 163, 184, 0.32), transparent 60%),
+          rgba(15, 23, 42, 0.95);
+        color: var(--muted);
+        backdrop-filter: blur(16px);
+      }
+
+      .pill span {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .stats {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-top: 1.2rem;
+        border-radius: var(--radius-lg);
+        padding: 0.55rem 0.75rem;
+        background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.2), transparent 60%),
+          radial-gradient(circle at 100% 0, rgba(129, 140, 248, 0.22), transparent 60%),
+          rgba(15, 23, 42, 0.96);
+        border: 1px solid rgba(107, 114, 128, 0.7);
+      }
+
+      .metric-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .metric {
+        display: flex;
+        flex-direction: column;
+        gap: 0.06rem;
+        min-width: 0;
+      }
+
+      .metric-label {
+        font-size: 0.7rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+      }
+
+      .metric-value {
+        font-size: 0.96rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+
+      .metric-sub {
+        font-size: 0.7rem;
+        color: var(--muted);
+      }
+
+      .button {
+        border-radius: 999px;
+        border: 1px solid rgba(56, 189, 248, 0.8);
+        background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.35), transparent 55%),
+          linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 1));
+        color: var(--text);
+        font-size: 0.8rem;
+        padding: 0.6rem 1.1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        cursor: pointer;
+        outline: none;
+        white-space: nowrap;
+        box-shadow:
+          0 0 32px rgba(56, 189, 248, 0.45),
+          0 0 0 1px rgba(15, 23, 42, 0.9);
+        transition:
+          transform var(--transition-fast),
+          box-shadow var(--transition-fast),
+          background var(--transition-fast),
+          border-color var(--transition-fast);
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+        box-shadow:
+          0 0 42px rgba(56, 189, 248, 0.65),
+          0 18px 40px rgba(15, 23, 42, 0.9);
+        background: radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.46), transparent 60%),
+          linear-gradient(135deg, rgba(15, 23, 42, 1), rgba(15, 23, 42, 1));
+      }
+
+      .button:active {
+        transform: translateY(0);
+        box-shadow:
+          0 0 24px rgba(56, 189, 248, 0.45),
+          0 12px 26px rgba(15, 23, 42, 0.9);
+      }
+
+      .button-icon {
+        width: 0.85rem;
+        height: 0.85rem;
+        border-radius: 999px;
+        background: radial-gradient(circle at 30% 30%, #e5e7eb, #9ca3af);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #020617;
+        font-size: 0.65rem;
+        font-weight: 700;
+      }
+
+      .board-shell {
+        position: relative;
+        margin-top: 1.3rem;
+        border-radius: var(--radius-xl);
+        padding: 0.75rem;
+        background:
+          radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.25), transparent 55%),
+          radial-gradient(circle at 100% 100%, rgba(129, 140, 248, 0.25), transparent 55%),
+          linear-gradient(145deg, #020617, #020617);
+        border: 1px solid rgba(15, 23, 42, 0.9);
+        box-shadow:
+          inset 0 0 0 1px rgba(148, 163, 184, 0.25),
+          0 18px 36px rgba(15, 23, 42, 0.98);
+      }
+
+      .board-frame {
+        position: relative;
+        border-radius: 20px;
+        padding: 0.65rem;
+        background:
+          linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.98)),
+          radial-gradient(circle at 10% 0, rgba(56, 189, 248, 0.5), transparent 55%);
+        box-shadow:
+          inset 0 0 0 1px rgba(148, 163, 184, 0.4),
+          0 14px 32px rgba(15, 23, 42, 0.95);
+      }
+
+      .board {
+        position: relative;
+        width: 100%;
+        padding-bottom: 100%;
+        border-radius: 14px;
+        background:
+          linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 1)),
+          radial-gradient(circle at 0 0, rgba(148, 163, 184, 0.16), transparent 55%);
+        overflow: hidden;
+        box-shadow:
+          inset 0 0 0 1px rgba(31, 41, 55, 0.9),
+          inset 0 18px 40px rgba(15, 23, 42, 0.85);
+      }
+
+      .tiles {
+        position: absolute;
+        inset: 0;
+        padding: 0.5rem;
+      }
+
+      .tile {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: clamp(1.25rem, 3.6vw, 1.8rem);
+        color: #e5e7eb;
+        border-radius: 12px;
+        background: radial-gradient(circle at 10% 0, rgba(255, 255, 255, 0.2), transparent 70%),
+          linear-gradient(145deg, #111827, #020617);
+        box-shadow:
+          0 10px 24px rgba(15, 23, 42, 0.9),
+          0 0 0 1px rgba(148, 163, 184, 0.5);
+        cursor: pointer;
+        transform-origin: 50% 50%;
+        transition:
+          transform var(--transition-fast),
+          box-shadow var(--transition-fast),
+          background var(--transition-fast);
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+      }
+
+      .tile::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(
+          145deg,
+          rgba(148, 163, 184, 0.55),
+          rgba(15, 23, 42, 0.9),
+          rgba(15, 23, 42, 0.68)
+        );
+        mix-blend-mode: soft-light;
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      .tile:hover {
+        box-shadow:
+          0 16px 30px rgba(15, 23, 42, 0.95),
+          0 0 0 1px rgba(248, 250, 252, 0.4);
+        background: radial-gradient(circle at 10% 0, rgba(248, 250, 252, 0.2), transparent 65%),
+          linear-gradient(145deg, #020617, #111827);
+      }
+
+      .tile:active {
+        transform: translate3d(var(--tx, 0), var(--ty, 0), 0) scale(0.985);
+        box-shadow:
+          0 8px 18px rgba(15, 23, 42, 0.9),
+          0 0 0 1px rgba(248, 250, 252, 0.4);
+      }
+
+      .tile.empty {
+        opacity: 0;
+        pointer-events: none;
+        box-shadow: none;
+      }
+
+      .board-glow {
+        position: absolute;
+        inset: 18%;
+        border-radius: 999px;
+        background: radial-gradient(circle at 50% 0, rgba(56, 189, 248, 0.2), transparent 65%);
+        filter: blur(22px);
+        opacity: 0.9;
+        pointer-events: none;
+        mix-blend-mode: screen;
+      }
+
+      .board-grid {
+        position: absolute;
+        inset: 0.5rem;
+        border-radius: inherit;
+        background-image:
+          linear-gradient(to right, rgba(31, 41, 55, 0.9) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(31, 41, 55, 0.9) 1px, transparent 1px);
+        background-size: 25% 25%;
+        opacity: 0.8;
+        pointer-events: none;
+        mask-image: radial-gradient(circle at 50% 20%, black, transparent 80%);
+      }
+
+      .footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-top: 0.8rem;
+        font-size: 0.72rem;
+        color: var(--muted);
+      }
+
+      .footer span strong {
+        color: var(--accent);
+      }
+
+      .hint {
+        opacity: 0.9;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      .kbd {
+        border-radius: 6px;
+        padding: 0.08rem 0.35rem;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        background: rgba(15, 23, 42, 0.9);
+        font-size: 0.65rem;
+      }
+
+      .victory-banner {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        opacity: 0;
+        transform: translateY(6px);
+        transition:
+          opacity 220ms ease-out,
+          transform 220ms ease-out;
+      }
+
+      .victory-banner.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .victory-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.4rem 1rem;
+        border-radius: 999px;
+        background:
+          radial-gradient(circle at 0 0, rgba(56, 189, 248, 0.5), transparent 60%),
+          radial-gradient(circle at 100% 100%, rgba(52, 211, 153, 0.45), transparent 60%),
+          rgba(15, 23, 42, 0.96);
+        border: 1px solid rgba(110, 231, 183, 0.85);
+        box-shadow:
+          0 18px 40px rgba(15, 23, 42, 0.95),
+          0 0 0 1px rgba(15, 23, 42, 1);
+        font-size: 0.8rem;
+        color: #ecfdf5;
+        text-shadow: 0 1px 2px rgba(15, 23, 42, 0.8);
+      }
+
+      .victory-medal {
+        width: 1rem;
+        height: 1rem;
+        border-radius: 999px;
+        background: radial-gradient(circle at 30% 30%, #fef9c3, #fbbf24, #92400e);
+        box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.6);
+      }
+
+      .victory-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+      }
+
+      .victory-title {
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 0.65rem;
+        opacity: 0.95;
+      }
+
+      .victory-sub {
+        font-size: 0.78rem;
+        opacity: 0.98;
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 1.1rem;
+        }
+
+        .shell {
+          padding: 1.1rem 1.15rem 1rem;
+          border-radius: 22px;
+        }
+
+        .stats {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .metric-group {
+          justify-content: space-between;
+        }
+
+        .button {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .footer {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .title-main {
+          font-size: 1.05rem;
+        }
+
+        .subtitle {
+          font-size: 0.74rem;
+        }
+
+        .board-shell {
+          margin-top: 1.1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell" aria-label="15-puzzle game">
+      <div class="shell-inner">
+        <header class="header">
+          <div class="title">
+            <div class="title-main">
+              <span>15‑Puzzle</span>
+              <span class="title-badge">
+                <span class="dot" aria-hidden="true"></span>
+                Logic · Sliding Tiles
+              </span>
+            </div>
+            <p class="subtitle">Arrange the tiles into order with smooth, minimal motion.</p>
+          </div>
+
+          <div class="pill">
+            Moves
+            <span id="movesDisplay">0</span>
+          </div>
+        </header>
+
+        <section class="stats" aria-label="Game stats and controls">
+          <div class="metric-group">
+            <div class="metric" aria-label="Move counter">
+              <div class="metric-label">Moves</div>
+              <div class="metric-value" id="movesDisplayLarge">0</div>
+              <div class="metric-sub">Every valid slide counts once</div>
+            </div>
+
+            <div class="metric" aria-label="Timer">
+              <div class="metric-label">Time</div>
+              <div class="metric-value" id="timeDisplay">00:00</div>
+              <div class="metric-sub">Starts with your first move</div>
+            </div>
+          </div>
+
+          <button class="button" id="shuffleButton" type="button">
+            <span class="button-icon" aria-hidden="true">⟳</span>
+            Shuffle
+          </button>
+        </section>
+
+        <section class="board-shell" aria-label="Puzzle board">
+          <div class="board-frame">
+            <div class="board">
+              <div class="board-grid" aria-hidden="true"></div>
+              <div class="board-glow" aria-hidden="true"></div>
+              <div class="tiles" id="tilesContainer" aria-label="Tiles"></div>
+
+              <div class="victory-banner" id="victoryBanner" aria-live="polite">
+                <div class="victory-chip">
+                  <span class="victory-medal" aria-hidden="true"></span>
+                  <div class="victory-text">
+                    <span class="victory-title">Puzzle solved</span>
+                    <span class="victory-sub" id="victorySummary">Nice work.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <span>
+            Target order: <strong>1 → 15</strong>, empty in the bottom‑right.
+          </span>
+          <span class="hint">
+            Tap a tile next to the gap
+            <span class="kbd">Click</span>
+          </span>
+        </footer>
+      </div>
+    </main>
+
+    <script>
+      (function () {
+        const SIZE = 4;
+        const TILE_COUNT = SIZE * SIZE;
+        const tilesContainer = document.getElementById("tilesContainer");
+        const movesDisplay = document.getElementById("movesDisplay");
+        const movesDisplayLarge = document.getElementById("movesDisplayLarge");
+        const timeDisplay = document.getElementById("timeDisplay");
+        const shuffleButton = document.getElementById("shuffleButton");
+        const victoryBanner = document.getElementById("victoryBanner");
+        const victorySummary = document.getElementById("victorySummary");
+
+        let positions = [];
+        let tilesByValue = new Map();
+        let moves = 0;
+        let elapsedSeconds = 0;
+        let timerId = null;
+        let hasStarted = false;
+        let isAnimating = false;
+
+        function formatTime(seconds) {
+          const m = Math.floor(seconds / 60)
+            .toString()
+            .padStart(2, "0");
+          const s = (seconds % 60).toString().padStart(2, "0");
+          return `${m}:${s}`;
+        }
+
+        function updateStats() {
+          movesDisplay.textContent = moves.toString();
+          movesDisplayLarge.textContent = moves.toString();
+          timeDisplay.textContent = formatTime(elapsedSeconds);
+        }
+
+        function startTimerIfNeeded() {
+          if (hasStarted || timerId !== null) return;
+          hasStarted = true;
+          timerId = setInterval(() => {
+            elapsedSeconds += 1;
+            timeDisplay.textContent = formatTime(elapsedSeconds);
+          }, 1000);
+        }
+
+        function stopTimer() {
+          if (timerId !== null) {
+            clearInterval(timerId);
+            timerId = null;
+          }
+        }
+
+        function createTiles() {
+          tilesContainer.innerHTML = "";
+          tilesByValue.clear();
+
+          for (let value = 1; value < TILE_COUNT; value++) {
+            const tile = document.createElement("button");
+            tile.type = "button";
+            tile.className = "tile";
+            tile.textContent = value.toString();
+            tile.setAttribute("data-value", value.toString());
+            tile.setAttribute("aria-label", `Tile ${value}`);
+            tile.addEventListener("click", () => handleTileClick(value));
+
+            tilesContainer.appendChild(tile);
+            tilesByValue.set(value, tile);
+          }
+
+          const emptyTile = document.createElement("div");
+          emptyTile.className = "tile empty";
+          emptyTile.setAttribute("aria-hidden", "true");
+          emptyTile.setAttribute("data-value", "0");
+          tilesContainer.appendChild(emptyTile);
+          tilesByValue.set(0, emptyTile);
+        }
+
+        function positionTiles() {
+          const rect = tilesContainer.getBoundingClientRect();
+          const gap = rect.width * 0.02;
+          const cell = (rect.width - gap * (SIZE - 1)) / SIZE;
+
+          for (let idx = 0; idx < TILE_COUNT; idx++) {
+            const value = positions[idx];
+            const tile = tilesByValue.get(value);
+            if (!tile) continue;
+
+            const row = Math.floor(idx / SIZE);
+            const col = idx % SIZE;
+
+            const x = col * (cell + gap);
+            const y = row * (cell + gap);
+
+            tile.style.width = `${cell}px`;
+            tile.style.height = `${cell}px`;
+            tile.style.setProperty("--tx", `${x}px`);
+            tile.style.setProperty("--ty", `${y}px`);
+            tile.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+          }
+        }
+
+        function countInversions(arr) {
+          const flat = arr.filter((v) => v !== 0);
+          let inv = 0;
+          for (let i = 0; i < flat.length - 1; i++) {
+            for (let j = i + 1; j < flat.length; j++) {
+              if (flat[i] > flat[j]) inv++;
+            }
+          }
+          return inv;
+        }
+
+        function isSolvable(arr) {
+          const inversions = countInversions(arr);
+          const blankIndex = arr.indexOf(0);
+          const blankRowFromBottom = SIZE - Math.floor(blankIndex / SIZE);
+
+          if (SIZE % 2 === 1) {
+            return inversions % 2 === 0;
+          }
+
+          if (blankRowFromBottom % 2 === 0) {
+            return inversions % 2 === 1;
+          }
+
+          return inversions % 2 === 0;
+        }
+
+        function shufflePositions() {
+          const target = Array.from({ length: TILE_COUNT }, (_, i) =>
+            i === TILE_COUNT - 1 ? 0 : i + 1
+          );
+
+          while (true) {
+            const arr = [...target];
+            for (let i = arr.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+
+            if (isSolvable(arr) && !arraysEqual(arr, target)) {
+              positions = arr;
+              return;
+            }
+          }
+        }
+
+        function arraysEqual(a, b) {
+          if (a.length !== b.length) return false;
+          for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) return false;
+          }
+          return true;
+        }
+
+        function isSolved() {
+          for (let i = 0; i < TILE_COUNT - 1; i++) {
+            if (positions[i] !== i + 1) return false;
+          }
+          return positions[TILE_COUNT - 1] === 0;
+        }
+
+        function handleTileClick(value) {
+          if (isAnimating) return;
+          const tileIndex = positions.indexOf(value);
+          const emptyIndex = positions.indexOf(0);
+
+          const tileRow = Math.floor(tileIndex / SIZE);
+          const tileCol = tileIndex % SIZE;
+          const emptyRow = Math.floor(emptyIndex / SIZE);
+          const emptyCol = emptyIndex % SIZE;
+
+          const distance = Math.abs(tileRow - emptyRow) + Math.abs(tileCol - emptyCol);
+          if (distance !== 1) return;
+
+          startTimerIfNeeded();
+
+          [positions[tileIndex], positions[emptyIndex]] = [positions[emptyIndex], positions[tileIndex]];
+          moves += 1;
+          updateStats();
+
+          isAnimating = true;
+          positionTiles();
+          setTimeout(() => {
+            isAnimating = false;
+            if (isSolved()) {
+              handleVictory();
+            }
+          }, 170);
+        }
+
+        function handleVictory() {
+          stopTimer();
+          const summary = `Solved in ${moves} move${moves === 1 ? "" : "s"} · ${formatTime(
+            elapsedSeconds
+          )}`;
+          victorySummary.textContent = summary;
+          victoryBanner.classList.add("visible");
+        }
+
+        function resetGame(shuffle = true) {
+          stopTimer();
+          elapsedSeconds = 0;
+          moves = 0;
+          hasStarted = false;
+          isAnimating = false;
+          victoryBanner.classList.remove("visible");
+          updateStats();
+
+          if (shuffle) {
+            shufflePositions();
+          } else {
+            positions = Array.from({ length: TILE_COUNT }, (_, i) =>
+              i === TILE_COUNT - 1 ? 0 : i + 1
+            );
+          }
+
+          requestAnimationFrame(positionTiles);
+        }
+
+        shuffleButton.addEventListener("click", () => {
+          shuffleButton.disabled = true;
+          shuffleButton.style.opacity = "0.8";
+          shuffleButton.style.cursor = "wait";
+
+          setTimeout(() => {
+            resetGame(true);
+            setTimeout(() => {
+              shuffleButton.disabled = false;
+              shuffleButton.style.opacity = "1";
+              shuffleButton.style.cursor = "pointer";
+            }, 120);
+          }, 40);
+        });
+
+        window.addEventListener("resize", () => {
+          requestAnimationFrame(positionTiles);
+        });
+
+        createTiles();
+        positions = Array.from({ length: TILE_COUNT }, (_, i) =>
+          i === TILE_COUNT - 1 ? 0 : i + 1
+        );
+        updateStats();
+        requestAnimationFrame(() => {
+          positionTiles();
+          setTimeout(() => {
+            resetGame(true);
+          }, 260);
+        });
+      })();
+    </script>
+  </body>
+</html>
