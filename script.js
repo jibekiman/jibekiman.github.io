@@ -40,9 +40,9 @@ let touchStartX = 0;
 let touchStartY = 0;
 
 // Timer state
-let timeLeft = 60;
+let timeElapsed = 0; // seconds
 let timerInterval = null;
-let isGameOver = false;
+let isGameFinished = false;
 
 // Initialize Game
 function init() {
@@ -54,8 +54,8 @@ function init() {
 
 function startTimer(isFirstLoad = false) {
   clearInterval(timerInterval);
-  isGameOver = false;
-  timeLeft = 120; // 2 minutes
+  isGameFinished = false;
+  timeElapsed = 0;
   updateTimerDisplay();
   timerEl.classList.remove('warning');
   
@@ -64,47 +64,20 @@ function startTimer(isFirstLoad = false) {
   }
 
   timerInterval = setInterval(() => {
-      if (isGameOver) {
+      if (isGameFinished) {
           clearInterval(timerInterval);
           return;
       }
       
-      timeLeft--;
+      timeElapsed++;
       updateTimerDisplay();
-      
-      if (timeLeft <= 10) {
-          timerEl.classList.add('warning');
-      }
-      
-      if (timeLeft <= 0) {
-          endGameLost();
-      }
   }, 1000);
 }
 
 function updateTimerDisplay() {
-  const min = Math.floor(timeLeft / 60);
-  const sec = timeLeft % 60;
+  const min = Math.floor(timeElapsed / 60);
+  const sec = timeElapsed % 60;
   timerEl.textContent = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-}
-
-function endGameLost() {
-  isGameOver = true;
-  clearInterval(timerInterval);
-  gameOverOverlay.classList.remove('hidden');
-  
-  // Return any dragging piece
-  if (draggingPiece) {
-      returnToInventory(draggingPiece);
-      draggingPiece.el.classList.remove('dragging');
-      draggingPiece = null;
-      clearHovers();
-      
-      document.body.removeEventListener('mousemove', handleDragMove);
-      document.body.removeEventListener('touchmove', handleDragMove);
-      document.body.removeEventListener('mouseup', handleDragEnd);
-      document.body.removeEventListener('touchend', handleDragEnd);
-  }
 }
 
 function createBoard() {
@@ -234,7 +207,7 @@ function flipPiece(id, skipAnimation = false) {
 // Drag functionality
 function handleDragStart(e) {
   if (e.button === 2) return; // ignore right click
-  if (isGameOver) return;
+  if (isGameFinished) return;
   
   const pieceEl = e.currentTarget;
   const id = pieceEl.dataset.id;
@@ -499,11 +472,28 @@ function checkWin() {
   }
   
   // Win condition met!
-  isGameOver = true;
+  isGameFinished = true;
   clearInterval(timerInterval);
   playSound('win');
   setTimeout(() => {
+    const min = Math.floor(timeElapsed / 60).toString().padStart(2, '0');
+    const sec = (timeElapsed % 60).toString().padStart(2, '0');
+    
+    winOverlay.innerHTML = `
+        <div class="win-content">
+            <h2>ПОБЕДА!</h2>
+            <p>Головоломка решена за ${min}:${sec}.</p>
+            <button id="next-level-btn" class="btn primary-btn">СЫГРАТЬ ЕЩЕ РАЗ</button>
+        </div>
+    `;
+    
     winOverlay.classList.remove('hidden');
+    
+    // Bind click since we rewrote innerHTML
+    document.getElementById('next-level-btn').addEventListener('click', () => {
+        winOverlay.classList.add('hidden');
+        resetBtn.click();
+    });
   }, 500);
 }
 
@@ -610,7 +600,7 @@ function bindEvents() {
   
   // Power User Keyboard Hotkeys
   document.addEventListener('keydown', (e) => {
-      if (isGameOver) return;
+      if (isGameFinished) return;
       if (!activePiece || activePiece.placedPos) return;
 
       if (e.key === 'q' || e.key === 'Q' || e.key === 'r' || e.key === 'R') {
