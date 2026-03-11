@@ -233,6 +233,7 @@ function handleDragStart(e) {
   // Get rect BEFORE detaching from container so offsets are perfect
   const rect = p.el.getBoundingClientRect();
   
+  // Save where the user grabbed the piece visually
   dragOffset.x = clientX - rect.left;
   dragOffset.y = clientY - rect.top;
   
@@ -341,22 +342,20 @@ function getBoardSlotFromPos(px, py) {
   const beadH = firstCellRect.height;
   const gap = 2; // match var(--grid-gap)
   
-  // Center of the dragging piece
-  const pieceW = draggingPiece.currentShape[0].length * beadW + (draggingPiece.currentShape[0].length - 1) * gap;
-  const pieceH = draggingPiece.currentShape.length * beadH + (draggingPiece.currentShape.length - 1) * gap;
+  // User's absolute cursor position
+  const cursorX = px + dragOffset.x;
+  const cursorY = py + dragOffset.y;
   
-  const center_px = px + pieceW / 2;
-  const center_py = py + pieceH / 2;
-  
-  // Allow drop if center of piece is within board container
-  if (center_px >= boardRect.left - 20 && center_px <= boardRect.right + 20 &&
-      center_py >= boardRect.top - 20 && center_py <= boardRect.bottom + 20) {
+  // Allow drop if cursor is within a VERY GENEROUS board container bounding box
+  if (cursorX >= boardRect.left - 60 && cursorX <= boardRect.right + 60 &&
+      cursorY >= boardRect.top - 60 && cursorY <= boardRect.bottom + 60) {
       
-      // Calculate row/col relative to the first actual cell, not the padding edge!
+      // We want the specific bead grabbed to land on the specific grid cell hovered.
+      // Easiest translation: Use the top-left of the piece's bounding box relative to the board
       const relX = px - firstCellRect.left;
       const relY = py - firstCellRect.top;
       
-      // Round to nearest slot factoring in gap
+      // Calculate closest raw row/column without arbitrary offset hacks
       const c = Math.round(relX / (beadW + gap));
       const r = Math.round(relY / (beadH + gap));
       
