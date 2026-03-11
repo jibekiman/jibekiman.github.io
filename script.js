@@ -26,7 +26,6 @@ const resetBtn = document.getElementById('reset-btn');
 const playAgainBtn = document.getElementById('next-level-btn');
 const tryAgainBtn = document.getElementById('try-again-btn');
 const quitBtn = document.getElementById('quit-btn');
-const headerRetryBtn = document.getElementById('header-retry-btn');
 const timerEl = document.getElementById('timer');
 
 // State
@@ -580,10 +579,6 @@ function bindEvents() {
     resetBtn.click();
   });
 
-  headerRetryBtn.addEventListener('click', () => {
-    resetBtn.click();
-  });
-  
   quitBtn.addEventListener('click', () => {
     // Optionally redirect or show a thank you message
     gameOverOverlay.innerHTML = '<div class="win-content"><h2>THANKS FOR PLAYING!</h2></div>';
