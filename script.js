@@ -1,17 +1,17 @@
 const KANOODLE_PIECES = [
-  { id: 'A', color: 'color-A', shape: [[1, 1, 1], [1, 1, 0]] }, // P-pentomino (5)
-  { id: 'B', color: 'color-B', shape: [[1, 1, 1], [1, 0, 0], [1, 0, 0]] }, // V-pentomino (5)
-  { id: 'C', color: 'color-C', shape: [[1, 1, 1, 1], [1, 0, 0, 0]] }, // L-pentomino (5)
-  { id: 'D', color: 'color-D', shape: [[1, 1, 1, 1], [0, 1, 0, 0]] }, // Y-pentomino (5)
-  { id: 'E', color: 'color-E', shape: [[1, 1, 0], [0, 1, 1], [0, 0, 1]] }, // W-pentomino (5)
-  { id: 'F', color: 'color-F', shape: [[1, 0, 1], [1, 1, 1]] }, // U-pentomino (5)
-  { id: 'G', color: 'color-G', shape: [[0, 1, 1], [1, 1, 0], [0, 1, 0]] }, // F-pentomino (5)
-  { id: 'H', color: 'color-H', shape: [[1, 1, 1, 0], [0, 0, 1, 1]] }, // N-pentomino (5)
-  { id: 'I', color: 'color-I', shape: [[1, 1, 1], [1, 0, 0]] }, // L-tetromino (4)
-  { id: 'J', color: 'color-J', shape: [[1, 1, 1], [0, 1, 0]] }, // T-tetromino (4)
-  { id: 'K', color: 'color-K', shape: [[1, 1], [1, 1]] }, // O-tetromino (4)
-  { id: 'L', color: 'color-L', shape: [[1, 1], [1, 0]] } // V-tromino (3)
-];
+  { id: 'A', color: 'color-A', shape: [[1, 1], [1, 1], [1, 0]] },             // P (Light Green)
+  { id: 'B', color: 'color-B', shape: [[1, 1, 1], [1, 0, 0], [1, 0, 0]] },    // V (Yellow)
+  { id: 'C', color: 'color-C', shape: [[1, 1, 1, 1], [1, 0, 0, 0]] },         // L (Light Blue)
+  { id: 'D', color: 'color-D', shape: [[1, 1, 1, 1], [0, 1, 0, 0]] },         // Y (Dark Blue)
+  { id: 'E', color: 'color-E', shape: [[1, 1, 0], [0, 1, 1], [0, 0, 1]] },    // W (Orange)
+  { id: 'F', color: 'color-F', shape: [[1, 0, 1], [1, 1, 1]] },               // U (Pink)
+  { id: 'G', color: 'color-G', shape: [[0, 1, 1], [1, 1, 0], [0, 1, 0]] },    // F (Dark Green)
+  { id: 'H', color: 'color-H', shape: [[1, 1, 1, 0], [0, 0, 1, 1]] },         // N (Purple)
+  { id: 'I', color: 'color-I', shape: [[0, 1, 0], [1, 1, 1], [0, 1, 0]] },    // X Cross (Red)
+  { id: 'J', color: 'color-J', shape: [[1, 1, 1, 1], [0, 0, 1, 0]] },         // Y variation / Z (Cyan)
+  { id: 'K', color: 'color-K', shape: [[1, 1], [1, 1]] },                     // O/Square (Grey/White)
+  { id: 'L', color: 'color-L', shape: [[1, 1, 1], [0, 1, 0], [0, 1, 0]] }     // T (Magenta)
+]; // Note: Different sets vary slightly but this guarantees 12 shapes totaling 55 beads including the Cross.
 
 const BOARD_ROWS = 5;
 const BOARD_COLS = 11;
@@ -32,8 +32,12 @@ const timerEl = document.getElementById('timer');
 // State
 let pieces = [];
 let draggingPiece = null;
+let activePiece = null;
 let dragOffset = { x: 0, y: 0 };
 let hoverCells = [];
+let hasMoved = false;
+let touchStartX = 0;
+let touchStartY = 0;
 
 // Timer state
 let timeLeft = 60;
@@ -120,8 +124,9 @@ function createPieces() {
   piecesContainer.innerHTML = '';
   pieces = [];
   
-  KANOODLE_PIECES.forEach((pieceData) => {
+  KANOODLE_PIECES.forEach((pieceData, index) => {
     const piece = createPieceElement(pieceData);
+    piece.style.order = index; // Keep order strict so it doesn't jump to the end on touch release
     piecesContainer.appendChild(piece);
     pieces.push({
       el: piece,
@@ -235,6 +240,15 @@ function handleDragStart(e) {
   const id = pieceEl.dataset.id;
   const p = pieces.find(x => x.data.id === id);
   
+  hasMoved = false;
+  const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+  const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+  touchStartX = clientX;
+  touchStartY = clientY;
+  
+  // Set as active piece
+  setActivePiece(p);
+  
   // If piece was placed, remove it from board
   if (p.placedPos) {
     removeFromBoard(p);
@@ -242,8 +256,6 @@ function handleDragStart(e) {
   
   // Get rect BEFORE detaching from container so offsets are perfect
   const rect = p.el.getBoundingClientRect();
-  const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-  const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
   
   dragOffset.x = clientX - rect.left;
   dragOffset.y = clientY - rect.top;
@@ -269,6 +281,11 @@ function handleDragMove(e) {
   
   const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
   const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+  
+  // Notice if it's an actual drag or just a tap
+  if (Math.abs(clientX - touchStartX) > 5 || Math.abs(clientY - touchStartY) > 5) {
+      hasMoved = true;
+  }
   
   movePiece(clientX, clientY);
   checkHover(clientX, clientY);
@@ -306,6 +323,11 @@ function handleDragEnd(e) {
   } else {
     // Return to inventory
     returnToInventory(p);
+    
+    // If it was just a tap and wasn't dropped on board, auto-rotate it for pure convenience
+    if (!hasMoved) {
+        rotatePiece(p.data.id);
+    }
   }
   
   p.el.classList.remove('dragging');
@@ -318,6 +340,19 @@ function handleDragEnd(e) {
   document.body.removeEventListener('touchmove', handleDragMove);
   document.body.removeEventListener('mouseup', handleDragEnd);
   document.body.removeEventListener('touchend', handleDragEnd);
+}
+
+function setActivePiece(p) {
+    if (activePiece) {
+        activePiece.el.classList.remove('active');
+    }
+    activePiece = p;
+    if (activePiece) {
+        activePiece.el.classList.add('active');
+        document.getElementById('mobile-controls').classList.remove('hidden-controls');
+    } else {
+        document.getElementById('mobile-controls').classList.add('hidden-controls');
+    }
 }
 
 function getBoardSlotFromPos(px, py) {
@@ -504,19 +539,45 @@ function playSound(type) {
 
 function bindEvents() {
   resetBtn.addEventListener('click', () => {
-    pieces.forEach(p => {
-      if (p.placedPos) removeFromBoard(p);
-      returnToInventory(p);
-      // Reset rotation back to default safely
-      while(JSON.stringify(p.currentShape) !== JSON.stringify(p.data.shape) && 
-            JSON.stringify(p.currentShape) !== JSON.stringify([...p.data.shape].reverse())) {
-          rotatePiece(p.data.id, true); // add true param to skip animation if we want
-      }
-      p.currentShape = [...p.data.shape.map(r => [...r])];
-      updatePieceDOM(p.el, p.currentShape);
+    // 1. Kinetic Pop Animation
+    const placedPieces = pieces.filter(p => p.placedPos);
+    
+    placedPieces.forEach(p => {
+        // Scatter them randomly outwards
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 100 + Math.random() * 150;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist;
+        const rot = Math.random() * 360 - 180;
+        
+        p.el.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(0.5)`;
+        p.el.style.opacity = '0';
+        p.el.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease';
+        
+        removeFromBoard(p);
     });
-    startTimer();
-    placeRandomStartingPiece();
+    
+    // 2. Clear out state and rebuild after animation completes
+    setTimeout(() => {
+        pieces.forEach(p => {
+            if (placedPieces.includes(p) || p.placedPos) {
+                if (p.placedPos) removeFromBoard(p);
+            }
+            returnToInventory(p);
+            p.el.style.opacity = '1';
+            
+            // Reset rotation back to default safely
+            while(JSON.stringify(p.currentShape) !== JSON.stringify(p.data.shape) && 
+                  JSON.stringify(p.currentShape) !== JSON.stringify([...p.data.shape].reverse())) {
+                rotatePiece(p.data.id, true); // add true param to skip animation if we want
+            }
+            p.currentShape = [...p.data.shape.map(r => [...r])];
+            updatePieceDOM(p.el, p.currentShape);
+        });
+        setActivePiece(null);
+        startTimer();
+        placeRandomStartingPiece();
+    }, 400);    
   });
   
   playAgainBtn.addEventListener('click', () => {
@@ -536,6 +597,28 @@ function bindEvents() {
   quitBtn.addEventListener('click', () => {
     // Optionally redirect or show a thank you message
     gameOverOverlay.innerHTML = '<div class="win-content"><h2>THANKS FOR PLAYING!</h2></div>';
+  });
+  
+  // Dedicated mobile action buttons
+  document.getElementById('btn-rotate').addEventListener('click', () => {
+      if (activePiece && !activePiece.placedPos) rotatePiece(activePiece.data.id);
+  });
+  
+  document.getElementById('btn-flip').addEventListener('click', () => {
+      if (activePiece && !activePiece.placedPos) flipPiece(activePiece.data.id);
+  });
+  
+  // Power User Keyboard Hotkeys
+  document.addEventListener('keydown', (e) => {
+      if (isGameOver) return;
+      if (!activePiece || activePiece.placedPos) return;
+
+      if (e.key === 'q' || e.key === 'Q' || e.key === 'r' || e.key === 'R') {
+          rotatePiece(activePiece.data.id);
+      }
+      if (e.key === 'e' || e.key === 'E' || e.key === 'f' || e.key === 'F') {
+          flipPiece(activePiece.data.id);
+      }
   });
   
   // Initial starting pieces logic
