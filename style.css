@@ -1,0 +1,520 @@
+:root {
+    --bg-dark: #05050a;
+    --text-main: #ffffff;
+    --text-dim: #8b8b99;
+    --accent: #6c5ce7;
+    
+    --bead-size: 40px;
+    --grid-gap: 2px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Cinematic Background */
+.background-effects {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.5;
+    animation: float 20s infinite ease-in-out alternate;
+}
+
+.orb-1 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(108,92,231,0.2) 0%, rgba(0,0,0,0) 70%);
+    top: -200px;
+    left: -100px;
+}
+
+.orb-2 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(0,210,211,0.15) 0%, rgba(0,0,0,0) 70%);
+    bottom: -100px;
+    right: -100px;
+    animation-delay: -5s;
+}
+
+.starfield {
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 40px 70px, rgba(255,255,255,0.8), rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 90px 40px, rgba(255,255,255,0.6), rgba(0,0,0,0));
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    opacity: 0.3;
+}
+
+@keyframes float {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(50px, 30px); }
+}
+
+header {
+    text-align: center;
+    padding: 30px 0 10px;
+    z-index: 10;
+    position: relative;
+    width: 100%;
+}
+
+header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #fff, #a29bfe);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(108,92,231,0.3);
+}
+
+header p {
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    font-weight: 300;
+    text-transform: uppercase;
+}
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    z-index: 10;
+}
+
+.game-info {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.timer {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(20, 20, 25, 0.6);
+    padding: 8px 16px;
+    border-radius: 50px;
+    border: 1px solid rgba(108,92,231,0.3);
+    box-shadow: 0 0 20px rgba(108,92,231,0.2), inset 0 0 10px rgba(0,0,0,0.5);
+    letter-spacing: 2px;
+    transition: color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.timer.warning {
+    color: #ff7675;
+    border-color: rgba(255, 118, 117, 0.5);
+    box-shadow: 0 0 20px rgba(255, 118, 117, 0.4), inset 0 0 10px rgba(0,0,0,0.5);
+    animation: urgent-pulse 1s infinite alternate;
+}
+
+.instructions {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+}
+
+.instructions span {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 12px;
+    border-radius: 20px;
+    margin: 0 5px;
+}
+
+.instructions b {
+    color: var(--text-main);
+}
+
+@keyframes urgent-pulse {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.05); }
+}
+
+.game-area {
+    margin-bottom: 40px;
+    perspective: 1000px;
+}
+
+/* Board */
+#board-container {
+    display: grid;
+    grid-template-columns: repeat(11, var(--bead-size));
+    grid-template-rows: repeat(5, var(--bead-size));
+    gap: var(--grid-gap);
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 
+        0 20px 50px rgba(0,0,0,0.5),
+        inset 0 1px 1px rgba(255,255,255,0.1),
+        inset 0 0 20px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transform: rotateX(10deg);
+    position: relative;
+}
+
+#board-container:hover {
+    box-shadow: 
+        0 25px 60px rgba(0,0,0,0.6),
+        inset 0 1px 1px rgba(255,255,255,0.1);
+    transform: rotateX(5deg);
+}
+
+.board-cell {
+    width: var(--bead-size);
+    height: var(--bead-size);
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 100%, #111, #222);
+    box-shadow: inset 0 3px 5px rgba(0,0,0,0.8);
+    transition: background 0.2s ease;
+}
+
+.board-cell.hover-valid {
+    background: radial-gradient(circle at 50% 100%, #2a2a3a, #3a3a4a);
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.2);
+}
+
+.board-cell.hover-invalid {
+    background: radial-gradient(circle at 50% 100%, #3a1a1a, #5a2a2a);
+    box-shadow: inset 0 0 10px rgba(255,50,50,0.3);
+}
+
+/* Pieces Inventory */
+.inventory-area {
+    width: 100%;
+    max-width: 95vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#pieces-container {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 30px;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 20px 30px;
+    width: 100%;
+    min-height: 200px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    background: rgba(20, 20, 25, 0.6);
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+    scroll-behavior: smooth;
+    
+    /* Elegant Custom Scrollbar */
+    scrollbar-color: rgba(255,255,255,0.2) rgba(0,0,0,0.3);
+    scrollbar-width: thin;
+}
+
+#pieces-container::-webkit-scrollbar {
+    height: 12px;
+}
+
+#pieces-container::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+    margin: 10px;
+}
+
+#pieces-container::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 6px;
+    border: 2px solid rgba(20, 20, 25, 1);
+}
+
+#pieces-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.4);
+}
+
+/* The Pieces themselves */
+.piece {
+    display: grid;
+    gap: var(--grid-gap);
+    cursor: grab;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 100;
+    flex-shrink: 0;
+}
+
+.piece:active {
+    cursor: grabbing;
+}
+
+.piece.dragging {
+    opacity: 0.9;
+    filter: drop-shadow(0 20px 25px rgba(0,0,0,0.7));
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.piece.placed {
+    position: absolute;
+    filter: drop-shadow(0 5px 8px rgba(0,0,0,0.4));
+    transition: top 0.2s ease, left 0.2s ease, transform 0.2s ease;
+}
+
+/* Bead Styling (Glossy Plastic Sphere effect) */
+.bead {
+    width: var(--bead-size);
+    height: var(--bead-size);
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 
+        inset -5px -5px 10px rgba(0,0,0,0.5),
+        inset 2px 2px 8px rgba(255,255,255,0.6),
+        0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* Add a bright specular highlight to the bead */
+.bead::after {
+    content: '';
+    position: absolute;
+    top: 15%;
+    left: 20%;
+    width: 30%;
+    height: 30%;
+    background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    transform: rotate(-45deg);
+}
+
+.bead.empty {
+    background: transparent;
+    box-shadow: none;
+}
+.bead.empty::after {
+    display: none;
+}
+
+/* Buttons */
+.controls {
+    margin-top: 25px;
+}
+
+.btn {
+    background: rgba(255,255,255,0.05);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.btn:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.small-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    background: rgba(108,92,231,0.2);
+    border-color: rgba(108,92,231,0.5);
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+    border: none;
+    font-weight: 600;
+    box-shadow: 0 10px 20px rgba(108,92,231,0.4);
+}
+
+.primary-btn:hover {
+    background: linear-gradient(135deg, #7d6cf8, #b3acff);
+    box-shadow: 0 15px 25px rgba(108,92,231,0.6);
+}
+
+/* Win / Game Over Overlays */
+#win-overlay, #game-over-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+#win-overlay.hidden, #game-over-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#win-overlay .win-content, #game-over-overlay .win-content {
+    text-align: center;
+    transform: scale(1);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ----------------- MOBILE RESPONSIVENESS ----------------- */
+@media (max-width: 600px) {
+    :root {
+        --bead-size: 26px; /* scale down the beads to fit 11 columns on ~320px width */
+    }
+
+    header h1 {
+        font-size: 2rem;
+        letter-spacing: 2px;
+    }
+
+    header p {
+        font-size: 0.8rem;
+    }
+    
+    .instructions {
+        font-size: 0.75rem;
+    }
+
+    .game-info {
+        position: static;
+        flex-direction: row;
+        justify-content: center;
+        margin-top: 15px;
+        gap: 20px;
+    }
+
+    header {
+        padding: 15px 0 10px;
+    }
+
+    .game-area {
+        margin-bottom: 20px;
+        perspective: none; /* disable 3D on very small screens to save space / avoid bugs */
+    }
+
+    #board-container {
+        transform: none;
+        padding: 8px;
+    }
+
+    #board-container:hover {
+        transform: none;
+    }
+
+    .inventory-area {
+        padding: 0 10px;
+    }
+
+    #pieces-container {
+        padding: 15px;
+        gap: 15px;
+        min-height: 120px;
+    }
+
+    .timer {
+        font-size: 1rem;
+        padding: 6px 12px;
+    }
+    
+    .small-btn {
+        padding: 5px 10px;
+    }
+}
+
+#win-overlay.hidden .win-content {
+    transform: scale(0.8);
+}
+
+.win-content h2 {
+    font-size: 4rem;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #00b894, #55efc4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(0,184,148,0.4);
+    animation: pulse 2s infinite;
+}
+
+.win-content h2.game-over-text {
+    background: linear-gradient(135deg, #ff7675, #d63031);
+    text-shadow: 0 10px 30px rgba(214,48,49,0.4);
+    animation: none;
+}
+
+.win-content p {
+    font-size: 1.2rem;
+    color: var(--text-dim);
+    margin-bottom: 30px;
+}
+
+.button-group {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+@keyframes pulse {
+    0% { filter: drop-shadow(0 0 10px rgba(0,184,148,0.4)); }
+    50% { filter: drop-shadow(0 0 25px rgba(0,184,148,0.8)); }
+    100% { filter: drop-shadow(0 0 10px rgba(0,184,148,0.4)); }
+}
+
+/* Piece Colors - High quality radial gradients */
+.color-A .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #55efc4, #00b894); } /* Light Green */
+.color-B .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #ffeaa7, #fdcb6e); } /* Yellow */
+.color-C .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #74b9ff, #0984e3); } /* Light Blue */
+.color-D .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #a29bfe, #6c5ce7); } /* Purple */
+.color-E .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #ff7675, #d63031); } /* Red */
+.color-F .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #fd79a8, #e84393); } /* Pink */
+.color-G .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #fab1a0, #e17055); } /* Orange */
+.color-H .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #81ecec, #00cec9); } /* Cyan */
+.color-I .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #badc58, #6ab04c); } /* Apple Green */
+.color-J .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #f8a5c2, #f78fb3); } /* Rose */
+.color-K .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #c7ecee, #95afc0); } /* Silver/Ice */
+.color-L .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #e056fd, #be2edd); } /* Magenta */
