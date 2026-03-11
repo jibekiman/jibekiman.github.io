@@ -511,16 +511,16 @@ main {
     100% { filter: drop-shadow(0 0 10px rgba(0,184,148,0.4)); }
 }
 
-/* Piece Colors - High quality radial gradients */
-.color-A .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #55efc4, #00b894); } /* Light Green */
-.color-B .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #ffeaa7, #fdcb6e); } /* Yellow */
-.color-C .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #74b9ff, #0984e3); } /* Light Blue */
-.color-D .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #a29bfe, #6c5ce7); } /* Purple */
-.color-E .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #ff7675, #d63031); } /* Red */
-.color-F .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #fd79a8, #e84393); } /* Pink */
-.color-G .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #fab1a0, #e17055); } /* Orange */
-.color-H .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #81ecec, #00cec9); } /* Cyan */
-.color-I .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #badc58, #6ab04c); } /* Apple Green */
-.color-J .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #f8a5c2, #f78fb3); } /* Rose */
-.color-K .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #c7ecee, #95afc0); } /* Silver/Ice */
-.color-L .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #e056fd, #be2edd); } /* Magenta */
+/* Piece Colors - High quality radial gradients matching canonical Kanoodle rules */
+.color-A .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #ff9f43, #ff6b35); } /* Orange */
+.color-B .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #ff7675, #e74c3c); } /* Red */
+.color-C .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #4a69bd, #1e3799); } /* Dark Blue */
+.color-D .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #ffd1dd, #f8a5c2); } /* Light Pink */
+.color-E .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #10ac84, #009432); } /* Green */
+.color-F .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #ffffff, #dcdde1); } /* White/Grey */
+.color-G .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #81ecec, #00cec9); } /* Light Blue / Cyan */
+.color-H .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #ff79a8, #e81b6c); } /* Hot Pink */
+.color-I .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #fed330, #fbc531); } /* Yellow */
+.color-J .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #8c7ae6, #5f27cd); } /* Dark Purple */
+.color-K .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #b8e994, #78e08f); } /* Light Green */
+.color-L .bead:not(.empty) { background: radial-gradient(circle at 30% 30%, #a4b0be, #57606f); } /* Dark Grey */

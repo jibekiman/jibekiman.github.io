@@ -1,17 +1,21 @@
+// Kanoodle exact canonical 12 pieces mapped from official PDF (totaling 55 beads)
 const KANOODLE_PIECES = [
-  { id: 'A', color: 'color-A', shape: [[1, 1], [1, 1], [1, 0]] },             // P (Light Green)
-  { id: 'B', color: 'color-B', shape: [[1, 1, 1], [1, 0, 0], [1, 0, 0]] },    // V (Yellow)
-  { id: 'C', color: 'color-C', shape: [[1, 1, 1, 1], [1, 0, 0, 0]] },         // L (Light Blue)
-  { id: 'D', color: 'color-D', shape: [[1, 1, 1, 1], [0, 1, 0, 0]] },         // Y (Dark Blue)
-  { id: 'E', color: 'color-E', shape: [[1, 1, 0], [0, 1, 1], [0, 0, 1]] },    // W (Orange)
-  { id: 'F', color: 'color-F', shape: [[1, 0, 1], [1, 1, 1]] },               // U (Pink)
-  { id: 'G', color: 'color-G', shape: [[0, 1, 1], [1, 1, 0], [0, 1, 0]] },    // F (Dark Green)
-  { id: 'H', color: 'color-H', shape: [[1, 1, 1, 0], [0, 0, 1, 1]] },         // N (Purple)
-  { id: 'I', color: 'color-I', shape: [[0, 1, 0], [1, 1, 1], [0, 1, 0]] },    // X Cross (Red)
-  { id: 'J', color: 'color-J', shape: [[1, 1, 1, 1], [0, 0, 1, 0]] },         // Y variation / Z (Cyan)
-  { id: 'K', color: 'color-K', shape: [[1, 1], [1, 1]] },                     // O/Square (Grey/White)
-  { id: 'L', color: 'color-L', shape: [[1, 1, 1], [0, 1, 0], [0, 1, 0]] }     // T (Magenta)
-]; // Note: Different sets vary slightly but this guarantees 12 shapes totaling 55 beads including the Cross.
+  { id: 'A', color: 'color-A', shape: [[0, 1], [0, 1], [1, 1]] },                 // Orange L4
+  { id: 'B', color: 'color-B', shape: [[0, 1], [1, 1], [1, 1]] },                 // Red P5
+  { id: 'C', color: 'color-C', shape: [[0, 1], [0, 1], [0, 1], [1, 1]] },         // Dark Blue L5
+  { id: 'D', color: 'color-D', shape: [[0, 1], [0, 1], [1, 1], [0, 1]] },         // Light Pink Y5
+  { id: 'E', color: 'color-E', shape: [[0, 1], [0, 1], [1, 1], [1, 0]] },         // Green N5
+  { id: 'F', color: 'color-F', shape: [[0, 1], [1, 1]] },                         // White V3
+  { id: 'G', color: 'color-G', shape: [[0, 0, 1], [0, 0, 1], [1, 1, 1]] },        // Light Blue V5
+  { id: 'H', color: 'color-H', shape: [[0, 0, 1], [0, 1, 1], [1, 1, 0]] },        // Hot Pink W5
+  { id: 'I', color: 'color-I', shape: [[1, 0, 1], [1, 1, 1]] },                   // Yellow U5
+  { id: 'J', color: 'color-J', shape: [[1, 1, 1, 1]] },                           // Dark Purple I4
+  { id: 'K', color: 'color-K', shape: [[1, 1], [1, 1]] },                         // Light Green O4
+  { id: 'L', color: 'color-L', shape: [[0, 1, 0], [1, 1, 1], [0, 1, 0]] }         // Grey X5
+];
+
+// A mathematically guaranteed solved state to start the board from
+const KANOODLE_SEED_SOLUTION = [{"id":"H","r":0,"c":0,"shape":[[1,0,0],[1,1,0],[0,1,1]]},{"id":"E","r":0,"c":1,"shape":[[1,1,0,0],[0,1,1,1]]},{"id":"D","r":0,"c":3,"shape":[[1,1,1,1],[0,0,1,0]]},{"id":"L","r":0,"c":6,"shape":[[0,1,0],[1,1,1],[0,1,0]]},{"id":"I","r":0,"c":8,"shape":[[1,1],[0,1],[1,1]]},{"id":"J","r":0,"c":10,"shape":[[1],[1],[1],[1]]},{"id":"G","r":2,"c":0,"shape":[[1,0,0],[1,0,0],[1,1,1]]},{"id":"C","r":2,"c":3,"shape":[[1,1,1,1],[0,0,0,1]]},{"id":"A","r":3,"c":1,"shape":[[1,1,1],[0,0,1]]},{"id":"B","r":3,"c":4,"shape":[[1,1,0],[1,1,1]]},{"id":"K","r":3,"c":7,"shape":[[1,1],[1,1]]},{"id":"F","r":3,"c":9,"shape":[[1,0],[1,1]]}];
 
 const BOARD_ROWS = 5;
 const BOARD_COLS = 11;
@@ -556,11 +560,7 @@ function bindEvents() {
             p.el.style.opacity = '1';
             
             // Reset rotation back to default safely
-            while(JSON.stringify(p.currentShape) !== JSON.stringify(p.data.shape) && 
-                  JSON.stringify(p.currentShape) !== JSON.stringify([...p.data.shape].reverse())) {
-                rotatePiece(p.data.id, true); // add true param to skip animation if we want
-            }
-            p.currentShape = [...p.data.shape.map(r => [...r])];
+            p.currentShape = p.data.shape.map(r => [...r]);
             updatePieceDOM(p.el, p.currentShape);
         });
         setActivePiece(null);
@@ -611,35 +611,41 @@ function bindEvents() {
 }
 
 function placeRandomStartingPiece() {
-  // Give the UI a tiny moment to render the board cells so we can calculate offsets
+  // Rather than guessing and breaking solvability, we now build a perfectly solved board,
+  // then scatter all but a few random pieces back into the inventory!
+  
   setTimeout(() => {
-    // Try to place a random piece in a random orientation somewhere
-    // Shuffle pieces
-    const available = pieces.filter(p => !p.placedPos);
-    if (!available.length) return;
-    
-    // Pick random piece
-    const p = available[Math.floor(Math.random() * available.length)];
-    
-    // Randomly rotate/flip it a few times 
-    const randomRotations = Math.floor(Math.random() * 4);
-    for(let i=0; i<randomRotations; i++) rotatePiece(p.data.id, true);
-    if (Math.random() > 0.5) flipPiece(p.data.id, true);
-
-    // Find a valid spot near the edge or random spot
-    const spots = [];
-    for(let r=0; r<BOARD_ROWS; r++) {
-        for(let c=0; c<BOARD_COLS; c++) {
-            if (canPlacePiece(p, r, c)) {
-                spots.push({r, c});
-            }
-        }
-    }
-
-    if (spots.length) {
-        const spot = spots[Math.floor(Math.random() * spots.length)];
-        placeOnBoard(p, spot.r, spot.c, true);
-    }
+      // 1. Instantly place all pieces according to the mathematically solved seed
+      KANOODLE_SEED_SOLUTION.forEach(seedData => {
+          const p = pieces.find(x => x.data.id === seedData.id);
+          if (p) {
+              // Apply the exact rotation/shape from the seed
+              p.currentShape = seedData.shape;
+              updatePieceDOM(p.el, p.currentShape);
+              placeOnBoard(p, seedData.r, seedData.c, true);
+          }
+      });
+      
+      // 2. Pick how many hint pieces stay on the board (e.g., 2)
+      const numHints = 2;
+      const allPieces = [...pieces];
+      
+      // Shuffle array to pick random victims to remove
+      allPieces.sort(() => Math.random() - 0.5);
+      
+      const piecesToKeep = allPieces.slice(0, numHints);
+      const piecesToRemove = allPieces.slice(numHints);
+      
+      // 3. Move the rest directly to the inventory instantly without animation
+      piecesToRemove.forEach((p) => {
+          removeFromBoard(p);
+          returnToInventory(p);
+          
+          // Reset rotations neatly for the inventory display by directly overwriting state
+          p.currentShape = p.data.shape.map(r => [...r]);
+          updatePieceDOM(p.el, p.currentShape);
+      });
+      
   }, 100);
 }
 
